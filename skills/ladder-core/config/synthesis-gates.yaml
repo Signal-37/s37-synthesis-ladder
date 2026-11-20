@@ -1,0 +1,423 @@
+# synthesis-gates.yaml — structural gates for the design-research synthesis ladder (L0–L5)
+#
+# The fourth config-driven structural gate surface in the author's own setup. The first was
+# the L1 attribution gate (its conditions are now canonical HERE); the other two govern the
+# author's local-model routing and are not in this package.
+#
+# Lineage (attribution-corrected 2026-07-23): config-driven structural gates are a pattern
+# the author's setup ALREADY RAN before this file; this is the 4th.
+# The pattern is not derived from any external source. Kostas Kazakos's ResearchConductor
+# gates/gates.yaml (public June 2026) is a CONVERGENT, same-era, independent articulation of
+# the same idea, reviewed 2026-07-07; its label "transparency is the point" was adopted here
+# as apt shorthand — a borrowed phrase, not a borrowed pattern (our thinking predates it).
+#   Analysis: the author's working notes, 2026-07-07.
+# Formalizing the ladder's implicit gates into one file was proposed by Karl (a collaborator's setup),
+# 2026-07-07: make the ladder's oversight boundaries "inspectable and adjustable without
+# editing skills" — conductor, not improviser.
+# Design consequence: thresholds live HERE; skill prose enforces but never owns a number.
+#
+# Enforcement honesty (updated 2026-07-10): a deterministic zero-LLM checker now exists —
+# ../ladder-core/scripts/synthesis-gates-check/check.ts (bun) — covering the script-shaped gates (1, 2, 3,
+# 4, 7 fully; 6 partially: status labeling, not research-grade dominance) plus a --source
+# mode that verifies this file parses and every gates.<key> pointer in skills/+agents/
+# resolves. Gate 5 and gate 6's grade judgment remain LLM-executed against mechanically-
+# specified conditions, never against model self-assessed confidence. Gate 8 (level_audit_before_advance,
+# 2026-09-23) is run by the agent; since 2026-10-22 the checker also tests for its mechanical
+# half: each L2–L5 set's audit report exists beside it, its gate line is cleared (or it carries
+# advanced_with_open_flags:), and it is no older than the set. In-skill enforcement at run time is
+# still LLM-executed; the checker is the post-hoc/pre-release audit.
+#
+# Epistemic frame (methodology piece, S37): pre-registered halting rules that no model
+# can argue with after the fact.
+
+gates_version: "2026-10-22.1"
+
+change_policy: |
+  This file is the CANONICAL SOURCE for gate conditions and thresholds, deliberately
+  packaged with the design rationale behind them (rationale/provenance fields, non_gates,
+  candidates) — the prose sections are intentional governance content, not clutter to clean up.
+  - Every edit bumps gates_version (date.serial) and gets a line in skills/CHANGELOG.md.
+  - Threshold edits require RE-VALIDATION against real ladder runs, not tweaking.
+    Knife-edge lesson (2026-07-07 voice-note reversal): a single-run pass at a threshold
+    carries no margin — validate with variation (multiple transcripts / projects) before
+    moving a number.
+  - Never add a keyword-match gate against adversarial or free-text content
+    (phi4-mini injection lesson, 2026-07-04): keyword gates are trivially gameable.
+
+enforcement_model: |
+  Rung transitions (L0->L1->L2->L3->L4->L5) are HUMAN-TRIGGERED by design — the researcher is the
+  gate at every level boundary; no gate below automates a rung transition. These gates
+  cover what that structure does not: input admissibility, automated in-rung checks,
+  and labeling/release rules. The L# skills enforce them at run time; this file is
+  canonical for conditions and thresholds. Two gate families: EVIDENTIARY gates
+  (floors and labels on what the data can support) and one PARAMETERIZATION gate
+  (domain_scope_confirmation — wrong-register routing, not ungrounded content).
+
+action_types:
+  halt: >
+    Work stops until the human resolves the named condition; resumable from the point
+    of refusal once the input/artifact is fixed — no restart of the run required.
+  halt-and-ask: >
+    Work stops pending one explicit human confirmation (a routing parameter, not a
+    defect); the confirmed value is recorded in frontmatter and inherited downstream.
+  warn: >
+    Work proceeds; the flag MUST appear in the workflow's completion report so the
+    human decides accept-vs-redo with the warning in view. Inherently visible.
+  demote-label: >
+    The artifact survives carrying the honest lower label (hypothesis, proto-archetype,
+    provenance category). NOT inherently visible — the demotion must be surfaced in the
+    producing workflow's output and checked by the level's audit, or it silently reads
+    as a quiet downgrade.
+
+gates:
+
+  # ── Gate 1: Attribution (L0 -> L1) ─────────────────────────────────────────
+  attribution_gate:
+    rung: L0 -> L1 (input admissibility)
+    status: codified            # already enforced in prose; this entry makes it config-canonical
+    action: halt                # refuse extraction entirely
+    applies_to:
+      - "conversation transcripts (_conversation.md, source_type: conversation)"
+      - "Method D diarized interview transcripts (attribution_status: in frontmatter, or Name?/[Speaker] markers in body)"  # extended 2026-07-01
+    condition: |
+      HALT if input frontmatter attribution_status is present and != "resolved" (fail closed:
+      "unresolved" or any other value, e.g. "draft-needs-speaker-mapping"; 2026-09-30, found in the
+      first outside install). Absent field: handled by the legacy/qa-inference rules below.
+      Per-finding: no finding may be extracted from a `**Name?:**` / `**[Speaker]:**`
+      turn without the ambiguity carried on the finding itself.
+      Mechanical anchor: the attribution_status: frontmatter field (exists today).
+    rationale: >
+      A finding attributed to the wrong speaker poisons every rung above it.
+      Attribution is unrecoverable downstream of L1.
+    enforced_by:
+      - skills/l1-findings-extraction/SKILL.md
+      - skills/l1-findings-extraction/workflows/ExtractFindings.md (Step 1b + closing checklist)
+      - skills/l1-findings-extraction/FindingsFormat.md (The Attribution Gate)
+    provenance: l0-transcribe-conversation contract; extended to Method D 2026-07-01
+
+  # ── Gate 2: L1 volume floor ────────────────────────────────────────────────
+  volume_floor_l1:
+    rung: L1 (in-rung output check)
+    status: formalized-from-guidance   # was advisory prose in L1 SKILL.md
+    action: warn                       # flag under-extraction; human decides re-extract vs accept
+    condition: |
+      WARN if the findings count < 15 for a 45-minute transcript
+      (prorated: < 1 finding per 3 minutes of substantive conversation).
+      Mechanical anchor: the `**Findings count:** [N]` header line each L1 findings
+      file already carries (computed at ExtractFindings Step 6). No findings_count
+      frontmatter field exists yet — promoting the anchor to frontmatter is a wiring
+      option, not an assumption (engineer finding E4, 2026-07-07).
+      Does not apply to `source_type: survey` L1 files (no transcript duration).
+      Survey replacement (row-level coverage): every row read appears in a finding's
+      supporting or contrary list or under "Rows not carried" with a reason.
+      Mechanical anchor: the `## Row accounting` heading and a `Rows not carried`
+      line (checker WARNs when either is missing; the row-by-row check is audited).
+    rationale: >
+      The V1 method is exhaustive by design. Fewer than 15 findings from 45 minutes
+      means only the obvious was extracted — the input to L2 is starved before
+      synthesis begins.
+    validation: >
+      Threshold inherited from l1-findings-extraction guidance as-practiced across
+      Meridian qual (29 interviews). NOT independently re-validated as a hard floor —
+      that is why action is warn, not halt. Promote to halt only after a margin check
+      across >=2 projects.
+    enforced_by:
+      - skills/l1-findings-extraction/SKILL.md
+      - skills/l1-findings-extraction/FindingsFormat.md (Volume Calibration; Survey Variant exemption)
+      - skills/l1-findings-extraction/workflows/ExtractFindings.md (Step 6 Volume Check)
+    provenance: l1-findings-extraction guidance; formalized 2026-07-07
+
+  # ── Gate 3: Domain scope confirmation (earliest rung; propagates L1 -> L5) ──
+  domain_scope_confirmation:
+    rung: earliest ladder level run (usually L1); propagates L1 -> L5 via frontmatter
+    status: formalized-from-skill-steps
+    action: halt-and-ask                  # do not synthesize into an unconfirmed domain
+    condition: |
+      HALT-AND-ASK unless domain: is present in frontmatter and confirmed by the human
+      at the earliest level run. Allowed values (DomainScope.md registry):
+        brand/design | product/UX | organizational | policy/advocacy | other
+      If upstream artifacts carry domain:, INHERIT and confirm — do not re-ask.
+      The confirmed domain propagates unchanged through every rung above.
+      Mechanical anchor: the domain: frontmatter field (exists today, all levels).
+    rationale: >
+      The abductive engine is domain-universal but the implication/knowledge/vocabulary
+      layer is parameterized (2026-06-03 domain parameterization). Synthesis into the
+      wrong domain register produces fluent, well-formed, wrong-facing implications at
+      every rung above the error. Parameterization gate, not an evidentiary one.
+    enforced_by:
+      # Enforcement lives in each skill's primary workflow's confirm-or-inherit step;
+      # the per-skill DomainScope.md files are the vocabulary REFERENCE, not the enforcement
+      # (engineer finding E6). True wiring footprint: 8 skills, ~16 files (E10).
+      # Wiring caution: do NOT grep for "Step 1" — the step number varies (Karl
+      # verification finding, 2026-07-08).
+      - the confirm-or-inherit step of each L# skill's primary workflow — Step 1 in
+        seven of eight (ExtractFindings, SynthesizeThemes, SynthesizeInsights,
+        SynthesizeOpportunityAreas, SynthesizePrinciples, SynthesizeValuePropositions,
+        SynthesizeFramework); Step 2 in SynthesizeArchetypes (its Step 1 is the
+        notification call)
+      - "reference only: each L# skill's DomainScope.md (8 files: L1, L2, L3, L4 x4, L5)"
+      # ADDED 2026-08-25 (subtraction pass D4.3, the researcher's ruling): three files participated in this
+      # gate without being listed here. Added at reference tier rather than dropping their pointers.
+      - "reference only: secondary workflows carrying their own confirm-or-inherit Step 0 —
+        skills/l3-insight-synthesis/workflows/WriteInsight.md, skills/l5-framework-synthesis/workflows/BuildDomain.md
+        (both inherit from their parent workflow's Step 1 when called in-session)"
+      - "reference only: skills/l4-value-proposition-synthesis/ValuePropositionFormat.md — its frontmatter template
+        carries a 'gate:' pointer at this gate; listed so the pointer resolves in both directions"
+      # KNOWN GAP, recorded not closed: nothing checks the REVERSE direction — that every file
+      # declaring 'gate: ../ladder-core/config/synthesis-gates.yaml' appears in that gate's enforced_by. The three
+      # entries above were found by hand. A checker would need to walk both directions.
+    provenance: 2026-06-03 L#-chain domain parameterization (skills/CHANGELOG.md, three entries)
+
+  # ── Gate 4: L2 theme evidence floor ────────────────────────────────────────
+  theme_evidence_floor:
+    rung: L2 (labeling rule)
+    status: codified              # enforced in L2 skill + AuditThemeSet; included for completeness
+    action: demote-label          # not a halt — the artifact survives with the honest label
+    condition: |
+      A cross-participant pattern with < 3 independent participants MUST be labeled
+      hypothesis, not theme. Independence: 3+ separate participants, not 3 utterances
+      from one person.
+      Mechanical anchor: the participants: frontmatter field on each L2 theme file
+      (exists today). Count rule (2026-11-03, from an independent tester's v1.1.2 three-level climb):
+      participants: counts only participants with ENACTED evidence (behavior, or a belief
+      held as their own); stated, hypothetical, anticipated, prescriptive and observed-in-
+      others evidence is listed, never counted (ThemeFormat Evidence; AuditThemeSet Audit 2).
+      Survey sources: distinct supporting survey respondents (deduplicated by survey +
+      row ID) count toward the floor through the survey_rows: field (floor applies to
+      participants + survey_rows; independence assumed unless the L1 file has respondent
+      IDs). Survey rows never count toward the 5+ strength band, which counts
+      participants, sessions and surveys. A theme corroborated only within one survey
+      is held [HYPOTHESIS — single-survey]; survey-only across surveys is named
+      [SURVEY-ONLY]. A supporting row counts only when its claim kind matches the
+      theme's claim. Mechanical anchor for the survey hold: the surveys: field
+      (distinct survey_id values); the checker HALTs participants: 0 with surveys < 2
+      and WARNs when participants: 0, surveys >= 2 and the title lacks [SURVEY-ONLY].
+      The single-session hold stays prose-audited (AuditThemeSet Audit 2).
+    rationale: >
+      Below 3 independent instances the pattern is a conjecture about the corpus,
+      not a property of it (LeCompte/Schensul pattern-emergence discipline).
+    enforced_by:
+      - skills/l2-theme-synthesis/SKILL.md
+      - skills/l2-theme-synthesis/ThemeFormat.md (Evidence Threshold and Strength)
+      - skills/l2-theme-synthesis/workflows/AuditThemeSet.md (Audit 2 Threshold Integrity)
+      - skills/l2-theme-synthesis/workflows/SynthesizeThemes.md (evidence-threshold table + independence check + Survey independence rule)
+      - skills/l2-theme-synthesis/workflows/WriteTheme.md (invocation precondition)
+      - "reference restatements (pointer-annotated, 2026-07-10 wiring): skills/l2-theme-synthesis/workflows/ClusterFindings.md, ../ladder-core/ladder-map.md, agents/Synthesist.md"
+    provenance: LeCompte/Schensul via Kolko ladder; codified in l2-theme-synthesis from inception
+
+  # ── Gate 5: L3 insight knowledge provenance ────────────────────────────────
+  insight_knowledge_provenance:
+    rung: L3 (labeling rule on the Knowledge layer)
+    status: codified              # V5 guardrail; enforced in AuditInsightSet
+    action: demote-label          # the claim survives carrying its honest provenance category
+    condition: |
+      Every claim in an insight's Knowledge layer MUST carry one of three provenance
+      labels: (a) synthesist-imported cross-domain theory, clearly labeled;
+      (b) participant-observed pattern, 3+ independent citations; survey-sourced
+          patterns only with their label (survey rows, independence verified/assumed,
+          [SURVEY-ONLY] where the theme carries it) and the L1 Limits line;
+      (c) participant-described analog or hypothesis, 1-2 participants named,
+      explicitly labeled as such.
+      Any competitor model, industry transformation arc, or quantitative estimate
+      appearing in K without explicit provenance is flagged as contamination risk.
+      An insight does not clear AuditInsightSet with unlabeled K-claims.
+    rationale: >
+      The V5 evidentiary-inversion failure: participant-described analogies (Alpina
+      flywheel, Ardent arc) entered K as established mechanisms and a single dealer's
+      estimate became a cross-participant benchmark — inflating weakly-grounded
+      insights and deprioritizing the behaviorally-saturated one, cascading through
+      L4 and L5. Provenance labels determine how much weight K can lend the claim.
+    enforced_by:
+      - skills/l3-insight-synthesis/workflows/AuditInsightSet.md (Knowledge provenance audit)
+      - skills/l3-insight-synthesis/workflows/SynthesizeInsights.md (labeling at generation)
+    provenance: Meridian V5 post-hoc audit guardrails (skills/CHANGELOG.md); added to this
+      file 2026-07-07 after the researcher's draft review flagged the missing L3 gate
+
+  # ── Gate 6: L4 archetype evidence floor ────────────────────────────────────
+  archetype_evidence_floor:
+    rung: L4 archetypes (labeling rule)
+    status: codified              # SynthesizeArchetypes Step 4 "Data Gate"
+    action: demote-label
+    condition: |
+      FULL archetype status requires foundational-dominant research AND either
+      >=12 participants with multi-session depth OR quantitative cluster data
+      (MaxDiff, k-means, EFA). Anything else — descriptive- or evaluative-dominant
+      data at any sample size, or foundational with <12 participants / single-session
+      — MUST be labeled proto-archetype with its upgrade path stated. The Step 4
+      status table in SynthesizeArchetypes.md is canonical for the full row set.
+      Mechanical anchor: the status declaration on each archetype card and the
+      master archetypes document.
+    rationale: >
+      Archetype vs. proto-archetype is a claim clients act on directly — segmentation
+      drives investment. Overclaiming full-archetype status on thin or stimulus-anchored
+      evidence is the L4 version of calling a hypothesis a theme.
+    enforced_by:
+      - skills/l4-archetype-synthesis/workflows/SynthesizeArchetypes.md (Step 4 Data Gate)
+      # NARROWED 2026-08-25 from file-level to the status-bearing checks only (subtraction pass D4.1,
+      # The researcher's ruling). File-level enforcement made all 37 units in AuditArchetypeSet.md
+      # config-change-class; only these four bear on the archetype-vs-proto status this gate governs.
+      # Named rather than numbered on purpose: the file currently carries TWO checks numbered 1.4
+      # ("Domain propagated" and "Proto-archetype upgrade paths"), so a number would be ambiguous.
+      - "skills/l4-archetype-synthesis/workflows/AuditArchetypeSet.md — four status-bearing checks only:
+        'Status declaration is explicit', 'Full archetype conditions are met', 'Confidence ceiling is
+        applied', 'Proto-archetype upgrade paths are stated'"
+      - skills/l4-archetype-synthesis/ArchetypeFormat.md (confidence/status declarations)
+      - skills/l4-archetype-synthesis/workflows/ArchetypeReadyGuide.md (pre-fieldwork eligibility note; added 2026-07-10 wiring)
+      - skills/l4-archetype-synthesis/SKILL.md (Archetype vs. Proto-Archetype)
+      - "reference restatement (pointer-annotated): ../ladder-core/ladder-map.md (l4-archetype-synthesis entry)"
+    provenance: SynthesizeArchetypes Step 4; added to this file 2026-07-07 (architect
+      finding A3 — a governance reader expects the evidence floor wherever one exists)
+
+  # ── Gate 7: FinalLadderReview before delivery (L5 -> release) ──────────────
+  final_ladder_review_before_delivery:
+    rung: L5 -> delivery (release rule; runs after AuditFramework clears "Synthesis complete")
+    status: codified            # standing capstone workflow since 2026-06-03; this entry makes it config-canonical
+    action: halt
+    condition: |
+      HALT final delivery — and any handoff to downstream work that will not revisit
+      the synthesis (brand strategy, concepting, quant instrument design) — unless a
+      FinalLadderReview report exists and is referenced from the L5 framework.
+      Mechanical check: the review report is a file that exists and is linked — not a
+      recollection that one happened. Reference-field convention (decided at wiring,
+      2026-07-10): the L5 master framework frontmatter carries final_ladder_review,
+      written as "pending" at creation (FrameworkFormat.md template) and replaced with
+      the report filename by FinalLadderReview's final step — the ladder's one
+      sanctioned capstone-only back-edit. HALT while the value is "pending" or absent.
+      A single-reviewer pass is admissible only when labeled per the workflow
+      ("Agents infrastructure not installed" / "Seat 2 unfilled").
+    rationale: >
+      Per-level audits see one level; cross-level pathologies (evidentiary inversion,
+      provenance laundering, claim resurfacing) are invisible to them by construction.
+      The two-reviewer adversarial capstone is the release bar for research-grade
+      deliverables — the adversarial instrument appropriate to foundational research
+      is an evidence-chain audit, not an idea attack (see non_gates.redteam_as_ladder_gate).
+    enforced_by:
+      - skills/l5-framework-synthesis/workflows/FinalLadderReview.md
+      - skills/l5-framework-synthesis/workflows/SynthesizeFramework.md (completion reminder, 2026-06-04)
+    provenance: Meridian V5 post-hoc audit formalized as standing capstone (skills/CHANGELOG.md
+      2026-06-03); designated THE ladder release gate by the researcher's draft review 2026-07-07,
+      replacing a drafted redteam_before_synthesis_grade gate (v .1) — see
+      non_gates.redteam_as_ladder_gate for where that rule now lives
+
+  # ── Gate 8: level audit before advancing (L2 -> L3 ... L5 -> delivery) ─────
+  level_audit_before_advance:
+    rung: L2 -> L3, L3 -> L4, L4 -> L5, L5 -> delivery (each level's own audit)
+    status: codified            # 2026-09-23; before this the audit was a closing reminder
+    action: halt
+    condition: |
+      HALT advancing from a level's set, and HALT starting the next level from it,
+      unless that level's audit report exists beside the set, its gate line is cleared
+      (or it carries advanced_with_open_flags: <date> — <user's reason>), and no file
+      in the set is newer than the report. The audit is run by a fresh agent with no
+      conversation context, never by the session that wrote the set; the writing
+      session makes the fixes and a new fresh agent re-audits.
+      Disclosure (2026-11-03): a current cleared report must carry
+      "**Inputs read:** <N> files, <M> items (<level below>)"; WARN when absent or when N is
+      below the level-below files on disk (when in scope), HALT under --release. Reports under
+      archive/ are exempt (the researcher: warn only on current reports). The line makes a partial read
+      visible; it does not prove the read happened.
+      Mechanical check: the report is a file that exists, with its filename per the
+      audit's "Save the Audit Report" step — not a recollection that an audit ran.
+      L1 is out of scope (no audit workflow; the researcher, 2026-09-23).
+    rationale: >
+      A reminder depends on whoever finishes the synthesis remembering it; users of
+      the shared edition may not know the audit exists. An author grading its own
+      set in the same context is the weakest audit available.
+    enforced_by:
+      - ../ladder-core/ladder-map.md (Running a level audit — the procedure)
+      - "final steps: skills/l2-theme-synthesis/workflows/SynthesizeThemes.md, skills/l3-insight-synthesis/workflows/SynthesizeInsights.md, skills/l4-opportunity-area-synthesis/workflows/SynthesizeOpportunityAreas.md, skills/l4-design-principle-synthesis/workflows/SynthesizePrinciples.md, skills/l4-value-proposition-synthesis/workflows/SynthesizeValuePropositions.md, skills/l4-archetype-synthesis/workflows/SynthesizeArchetypes.md, skills/l5-framework-synthesis/workflows/SynthesizeFramework.md"
+      - "entry checks: the same L3, L4 and L5 synthesis workflows (Audit gate, Step 1)"
+      - "tools/synthesis-gates-check/check.ts gate 8 (2026-10-22): the report's existence, gate line and age, per set; WARN mid-flight, HALT when a later level exists or at --release"
+    provenance: the researcher, 2026-09-23 — hard-wire the L2–L5 audits; fresh agent audits;
+      L1 skipped; built on its own rather than with the held revision set
+
+# ── Explicit non-gates (adopted-against, with reasons) ────────────────────────
+non_gates:
+  redteam_as_ladder_gate: >
+    RedTeam is NOT a release gate for foundational research (the researcher's ruling on the v .1
+    draft, 2026-07-07). RedTeam attacks ideas and positions; ladder outputs need their
+    EVIDENCE CHAIN audited, which FinalLadderReview provides (two adversarial reviewers,
+    five cross-level chain-of-custody checks). The 2026-07-06 decision — "RedTeam reserved
+    for when it becomes an S37-facing offer or public claim"
+    (the author's session notes, 2026-07-06) — governs DERIVATIVE artifacts built ON
+    the research (offers, public claims, thought leadership), which are outside this
+    file's scope. This entry is that rule's durable home; Council does not substitute
+    for RedTeam on those derivative artifacts (Council advances developing ideas,
+    RedTeam is the hostile-reader test).
+  distress_keyword_gate: >
+    Kazakos's distress_gate shape (12-keyword list, max_occurrences) is NOT adopted.
+    Keyword matching misses sarcasm and silence (his own admission) and is trivially
+    gameable against adversarial content (phi4-mini injection, 2026-07-04). Participant
+    distress in live fieldwork is a human-moderator responsibility, not a config gate.
+  synthetic_participant_admission: >
+    Synthetic participants are inadmissible as research data at L0, ever. The legitimate
+    niche — dry-running a DiscussionGuide against synthetic personas — tests the
+    INSTRUMENT and never enters the corpus (structurally identical to benchmark negative
+    controls). Not a gate because admission is never conditional: the answer is no.
+
+# ── Candidates (v2 — named, not yet gates; each addition is new load-bearing config) ──
+candidates:
+  observation_source_gate: >
+    NAMED 2026-07-31 with the observation channel (the researcher ruling, provisional + optional) —
+    halt-shaped input-admissibility condition at L1: an observation-class, photo-class, or
+    Delivery-signal finding with no citable capture artifact (FN entry or L0 delivery
+    annotation) is not written. Currently enforced in prose at point of use
+    (l1-findings-extraction/FindingsFormat.md Evidence Classes; workflows/ExtractFindings.md
+    Source gate; workflows/WriteFinding.md Delivery carve-out; both L0 TranscriptFormats).
+    Graduates to a full gate entry after first-fieldwork validation, per the channel's own
+    provisional status. Companion condition already live in prose: observer-independence at
+    L2 (a theme corroborated only by one researcher's observation-class findings is
+    single-observer — SynthesizeThemes Step 5, ThemeFormat, AuditThemeSet Audit 2).
+  felt_flags_presence: >
+    NAMED 2026-08-22 (the researcher slot ruling, Alexander plan 1.4) — every rung completion report
+    and every L2-L5 master document frontmatter carries a felt_flags: single-line scalar
+    (none-issued, or labeled reports with settling conditions). Enforced in prose at point
+    of use (seven Synthesize* completion reports; seven Format master frontmatter templates;
+    clause-4 discard-point lines at SynthesizeThemes Step 4 and
+    abductive-reasoning/ObservationToHypothesis competing-hypotheses field). Graduation
+    condition: two consecutive rungs with non-pro-forma content. De-install trigger lives in
+    Alexander-Method-Prototypes/alexander-instrument-ledger.md (two consecutive rungs
+    none-issued-or-absent with empty retrospective pass -> slot out).
+  falsifier_field: >
+    NAMED 2026-08-22 (the researcher slot ruling, Alexander plan 1.2); RESHAPED AT L3 2026-11-03 (the researcher:
+    the field was pushing qualitative synthesis toward quantitative testing). L3 insights now
+    carry a What would change this section (counter-cases in the data, rival reading, what
+    would make us revise it; no counts, percentages or thresholds), judged per insight by
+    AuditInsightSet Audit 3b with no score, no blind majority and no fixture. Enforced in prose
+    at point of use (InsightFormat The What Would Change This Field + both templates;
+    SynthesizeInsights Step 3b and checklist; AuditInsightSet Audit 3b). Removal rule: at each
+    engagement retrospective the researcher judges whether the section changed any insight; none across
+    two consecutive engagements -> section out with its record (ledger). EXTENDED TO L5
+    2026-11-03 (the researcher): each framework domain carries the same section (counter-cases among
+    insights/OAs, a rival architecture, what would make us re-draw it; no thresholds) —
+    FrameworkFormat both domain blocks; SynthesizeFramework Step 6 item 4; AuditFramework mirror
+    judged per domain with no tally. OA/VP wiring not built. The 2026-08-21 and
+    2026-11-03 scorer fixtures are archived in the author's measurement ledger.
+  deterministic_checker: >
+    DELIVERED 2026-07-10 — ../ladder-core/scripts/synthesis-gates-check/check.ts (attribution_status read,
+    Findings-count parse + stated-vs-actual, domain: enum + cross-artifact consistency,
+    participants: read, archetype_status labeling, final_ladder_review file-exists;
+    --source mode for gate-surface integrity; --release escalates gate 7 pending to halt).
+    Output contract ratified by the researcher 2026-07-10; validated on fixtures (13 tests) and the
+    real Meridian V7 corpus (97 files: 0 halt, legacy-domain + missing-review-field warns —
+    both correct). Remains listed here as the record of where it came from (A1/Karl).
+  compression_ratio_check: >
+    ~16 themes -> 8-12 insights -> 4-6 OAs/Principles -> 1 framework; a non-compressing
+    layer means the synthesis hasn't happened. Warn-shaped; needs a validated tolerance
+    band before becoming config.
+  volume_calibration_ranges: >
+    REVIEWED 2026-08-25 (subtraction pass D4.2) and DELIBERATELY NOT PROMOTED. The pass proposed
+    moving the L4-VP count into this file per the change_policy's "thresholds live HERE"; this
+    entry's own standing judgment says otherwise and it wins — the range needs participant_count
+    as a mechanical input it does not have, and a threshold that cannot be evaluated is not a gate.
+    The underlying defect the pass found was real and was fixed where it belonged: the VP candidate
+    count had been stated four incompatible ways across ValuePropositionFormat.md, AuditValuePropositionSet.md,
+    SynthesizeValuePropositions.md and SKILL.md; reconciled 2026-08-25 with ValuePropositionFormat.md canonical,
+    matching how L2/L4-AR/L5 already keep theirs in their Format files.
+    Per-level expected-count tables already in ThemeFormat.md / ArchetypeFormat.md /
+    FrameworkFormat.md / ValuePropositionFormat.md; range-shaped (over- AND under-production), richer than a floor;
+    would need participant_count as a mechanical input.
+  wir_style_threshold_audit: >
+    Blinded human scoring of AUTOMATED in-rung thresholds only (e.g., is the 15-findings
+    floor where the researcher's judgment would put it?) — NOT of rung transitions, which are
+    already human-gated. Blocked on the open WIR exploration item.

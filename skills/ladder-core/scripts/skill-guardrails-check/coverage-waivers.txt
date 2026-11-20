@@ -1,0 +1,9 @@
+# coverage waivers — per-FILE dismissals of heuristic coverage candidates.
+# Vocabulary findings can NEVER be waived; this file applies to the coverage scan only.
+# format: <path relative to the scanned root> | <ruled date> | <reason>
+# A waiver suppresses the candidate flag for that file; delete the line to re-arm.
+# Paths are reconciled against the real tree on every run, CASE-EXACTLY: a line
+# that resolves to nothing HALTs the check.
+#
+# This edition ships with no waivers. The author's own waivers name skills that
+# are not in this package, and an inert waiver is a HALT.

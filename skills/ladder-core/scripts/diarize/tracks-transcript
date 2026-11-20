@@ -1,0 +1,16 @@
+#!/bin/bash
+# Thin wrapper — runs the Method S (separate-tracks) pipeline in the tool's own venv.
+# Usage: tracks-transcript <track1> <track2> ... OR <dir>  [--model <mlx repo>] [--out draft.md] [--language en]
+set -euo pipefail
+# Resolve symlinks so the wrapper also works when linked onto PATH.
+SRC="${BASH_SOURCE[0]}"
+while [[ -L "$SRC" ]]; do
+  T="$(readlink "$SRC")"
+  [[ "$T" == /* ]] && SRC="$T" || SRC="$(cd "$(dirname "$SRC")" && pwd)/$T"
+done
+DIR="$(cd "$(dirname "$SRC")" && pwd)"
+if [[ ! -x "$DIR/venv/bin/python" ]]; then
+  echo "ERROR: venv missing at $DIR/venv — run $DIR/setup.sh first" >&2
+  exit 1
+fi
+exec "$DIR/venv/bin/python" "$DIR/tracks_transcript.py" "$@"
